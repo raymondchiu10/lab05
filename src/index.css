@@ -1,0 +1,30 @@
+body {
+}
+
+.display {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    left: 0;
+    top: 0;    
+    margin: auto;
+    background-color: pink;
+    cursor: none;
+}
+
+.controls {
+    background-color: red;
+    position: fixed;
+    width: 30vw;
+    height: 20vh;
+    bottom: 0;
+    right: 0;
+}
+
+#myImg {
+    position: absolute;
+}
+
+.allImgs {
+    position: absolute
+}
