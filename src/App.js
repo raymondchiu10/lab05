@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import mySocket from "socket.io-client";
+import Rooms from "./comp/Rooms";
 
 class App extends Component {
     constructor(props){
@@ -10,14 +11,16 @@ class App extends Component {
             myImg:require("./imgs/1.png"),
             myImg2:require("./imgs/2.png"),
             allUsers:[],
-            myId: null
+            myId: null,
+            showDisplay: false
         }
         this.handleImage = this.handleImage.bind(this);
+        this.handleDisplay = this.handleDisplay.bind(this);
     }
     
     componentDidMount(){
         
-        this.socket = mySocket("https://d3lab5socket.herokuapp.com/");
+        this.socket = mySocket("http://localhost:10000");
         
         this.socket.on("userjoined", (data)=>{
            this.setState({
@@ -29,6 +32,23 @@ class App extends Component {
             this.setState({
                 myId:data
             })
+            this.refs.thedisplay.addEventListener("mousemove", (ev)=>{
+
+                if(this.state.myId === null){
+                    //FAIL
+                    return false;
+                }
+
+                this.refs["u"+this.state.myId].style.left = ev.pageX + "px";
+                this.refs["u"+this.state.myId].style.top = ev.pageY + "px";
+
+                this.socket.emit("mymove", {
+                    x: ev.pageX + "px",
+                    y: ev.pageY + "px",
+                    id: this.state.myId,
+                    src: this.refs["u"+this.state.myId].src
+                })
+            });
         })
         
         this.socket.on("newmove", (data)=>{
@@ -37,27 +57,18 @@ class App extends Component {
             this.refs["u"+data.id].src = data.src;
         })
         
-        this.refs.thedisplay.addEventListener("mousemove", (ev)=>{
-            
-            if(this.state.myId === null){
-                //FAIL
-                return false;
-            }
-            
-            this.refs["u"+this.state.myId].style.left = ev.pageX + "px";
-            this.refs["u"+this.state.myId].style.top = ev.pageY + "px";
-            
-            this.socket.emit("mymove", {
-                x: ev.pageX + "px",
-                y: ev.pageY + "px",
-                id: this.state.myId,
-                src: this.refs["u"+this.state.myId].src
-            })
-        });
     }
     
     handleImage(evt){
         this.refs["u"+this.state.myId].src = evt.target.src;
+    }
+    
+    handleDisplay(roomString){
+        this.setState({
+            showDisplay: true
+        });
+        
+        this.socket.emit("joinroom", roomString);
     }
     
     render() {
@@ -68,17 +79,34 @@ class App extends Component {
             )
         })
         
+        var comp = null;
+        
+        if (this.state.showDisplay == false){
+            comp = <Rooms 
+                    handleDisplay = {this.handleDisplay}
+                    />
+        } else {
+            comp = (
+                <div>
+                    <div ref="thedisplay" className="display">
+                        {allImgs}
+                        <img ref="myImg" id="myImg" src={this.state.myImg} height={50} />
+                    </div>
+
+                    <div className="controls">
+                        {this.state.myId}
+                        <img src={this.state.myImg} height={50} onClick={this.handleImage} />
+                        <img src={this.state.myImg2} height={50} onClick={this.handleImage} />
+                    </div> 
+                </div>
+
+            );
+        }
+        
+        
         return (
             <div className="App">
-                <div ref="thedisplay" className="display">
-                    {allImgs}
-                    <img ref="myImg" id="myImg" src={this.state.myImg} height={50} />
-                </div>
-                <div className="controls">
-                    {this.state.myId}
-                    <img src={this.state.myImg} height={50} onClick={this.handleImage} />
-                    <img src={this.state.myImg2} height={50} onClick={this.handleImage} />
-                </div>
+                {comp}
             </div>
         );
     }
