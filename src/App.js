@@ -12,7 +12,8 @@ class App extends Component {
             myImg2:require("./imgs/2.png"),
             allUsers:[],
             myId: null,
-            showDisplay: false
+            showDisplay: false,
+            stickers: []
         }
         this.handleImage = this.handleImage.bind(this);
         this.handleDisplay = this.handleDisplay.bind(this);
@@ -49,7 +50,21 @@ class App extends Component {
                     src: this.refs["u"+this.state.myId].src
                 })
             });
-        })
+            
+            this.refs.thedisplay.addEventListener("click", (ev)=> {
+                this.socket.emit("stick", {
+                    x: ev.pageX,
+                    y: ev.pageY,
+                    src: this.refs["u"+this.state.myId].src
+                });
+            });
+        });
+        
+        this.socket.on("newsticker", (data)=> {
+            this.setState({
+                stickers:data
+            });
+        });
         
         this.socket.on("newmove", (data)=>{
             this.refs["u"+data.id].style.left = data.x;
@@ -77,6 +92,13 @@ class App extends Component {
             return (
                 <img ref={"u"+obj} className="allImgs" src={this.state.myImg} height={50} key={i} />
             )
+        });
+        
+        var allstickers = this.state.stickers.map((obj, i)=>{
+            var mstyle = {left: obj.x, top:obj.y};
+            return (
+                <img style={mstyle} key={i} src={obj.src} height={50} className="allImgs" />
+            )
         })
         
         var comp = null;
@@ -90,11 +112,11 @@ class App extends Component {
                 <div>
                     <div ref="thedisplay" className="display">
                         {allImgs}
-                        <img ref="myImg" id="myImg" src={this.state.myImg} height={50} />
+                        {allstickers}
                     </div>
 
                     <div className="controls">
-                        {this.state.myId}
+                        {this.state.myId} <br/><br/>
                         <img src={this.state.myImg} height={50} onClick={this.handleImage} />
                         <img src={this.state.myImg2} height={50} onClick={this.handleImage} />
                     </div> 
